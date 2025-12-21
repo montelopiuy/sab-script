@@ -1,0 +1,184 @@
+-- ================= CONFIG =================
+local TRIAL_DURATION = 12 * 60 * 60
+local SAVE_FILE = "trial_hwid_secure.json"
+local SCRIPT_URL = "loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/8a44751a9ca944ebf5b2be939d54acc6.lua"))()"
+
+-- ================= SERVICES =================
+local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+-- ================= HWID =================
+local hwid = (gethwid and gethwid())
+    or game:GetService("RbxAnalyticsService"):GetClientId()
+
+-- ================= KEYS =================
+local validKeys = {
+"9A2FQ7M8ZP4KXW1B","L8Z2P9FQKX4W7A1M","Q7MZP4A1F8X2W9K",
+"F1X8ZKQ9M7P2A4W","P2Z9QXW7M8K1F4A",
+"A8P4ZQKX1F9M2W7","Z9KQF4W1X7P8A2M",
+"MZ8QF9X1W2P4A7K","X7FQ9KZP1W2M4A8",
+"K2ZP8M4XQF1A7W9",
+
+"8MZK1WQXP2A4F97","9ZP1QK8M4F2A7WX",
+"X4A2MZ7KQW9P1F8","PZ7QK9X1A8M4W2F",
+"Q9Z8A4P2X7F1WKM",
+
+"AZX7K2Q1P4FWM98","M8KZ7X9F2P1Q4WA",
+"FZ7Q8A9KXMP124W","P7Q2X8KZAF9M14W",
+"1FQ2A9MZ7KX8W4P",
+
+"W2Z4QK7A8P1MFX9","8KZQXP7M4W1F2A9",
+"Q1X7M4ZK9W8FAP2","A4FZ9X1K7QPM28W",
+"7X2F4A1PZK9Q8WM",
+
+"KQ7P1X4Z8WFM92A","Z1XW9P2M8FQ4A7K",
+"M9FZK7P4XQ1AW82","QK9Z7A8P1FMX2W4",
+"F1Q7XK8M4ZAPW29",
+
+"P9ZQXW4K7M8A2F1","8A2X9MZ4W7QF1KP",
+"K7X1Z8M4F2QP9WA","Z9M8XQK7P14FAW2",
+"1P2Q7Z8M4FXK9WA",
+
+"AQ4P8Z1F9KX7M2W","ZK8M7P4A1XQW2F9",
+"9X1QK4Z2F7WAPM8","P4A7Z8KMX9Q1FW2",
+"X8KZ9Q4W1PAMF72",
+
+"7M4X9KZP1QF2AW8","QZ8X4P9W1AM7F2K",
+"K9Z2X8M7F1AWP4Q","Z4X8M1K9P7A2FQW",
+"1Z7P9A4X8QWMFK2",
+
+"Q8ZP9X4K2W7A1FM","7F1XQZK8M4WAP29",
+"Z8M9Q7X1P2A4FKW","XQ1PZK9WAMF7428",
+"PZQ8W9F7XKAM124",
+
+"A1ZQ4F9P8XKWM72","WZ2K9F7PAXM8Q14",
+"9QX2Z4K8A7PFWM1","KZP1M8Q9AF7XW24",
+"7A9MZQX1P8FKW42",
+
+"Z8K1P9X7W2FQAM4","F9ZP7Q4XKAM218W"
+}
+
+local keyLookup = {}
+for _,k in ipairs(validKeys) do
+    keyLookup[k] = true
+end
+
+-- ================= LOAD DATA =================
+local data = {}
+if isfile(SAVE_FILE) then
+    data = HttpService:JSONDecode(readfile(SAVE_FILE))
+end
+
+-- ================= SECURITY CHECK =================
+if data.lastSeen and os.time() < data.lastSeen then
+    StarterGui:SetCore("SendNotification",{
+        Title="Security error",
+        Text="Time manipulation detected.",
+        Duration=8
+    })
+    return
+end
+
+-- ================= TRIAL CHECK =================
+if data.hwid == hwid and data.used then
+    local elapsed = os.time() - data.startTime
+
+    if elapsed >= TRIAL_DURATION then
+        StarterGui:SetCore("SendNotification",{
+            Title="Trial expired",
+            Text="This key has already been used.",
+            Duration=8
+        })
+        return
+    else
+        data.lastSeen = os.time()
+        writefile(SAVE_FILE, HttpService:JSONEncode(data))
+        loadstring(game:HttpGet(SCRIPT_URL))()
+        return
+    end
+end
+
+-- ================= GUI =================
+local blur = Instance.new("BlurEffect", Lighting)
+TweenService:Create(blur,TweenInfo.new(0.3),{Size=18}):Play()
+
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.fromOffset(380,230)
+frame.Position = UDim2.fromScale(0.5,0.5)
+frame.AnchorPoint = Vector2.new(0.5,0.5)
+frame.BackgroundColor3 = Color3.fromRGB(18,18,18)
+Instance.new("UICorner",frame).CornerRadius = UDim.new(0,18)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,40)
+title.Text = "Key System"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+
+local box = Instance.new("TextBox", frame)
+box.Size = UDim2.new(0.9,0,0,40)
+box.Position = UDim2.new(0.05,0,0.3,0)
+box.PlaceholderText = "Enter your key"
+box.BackgroundColor3 = Color3.fromRGB(30,30,30)
+box.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner",box).CornerRadius = UDim.new(0,10)
+
+local timer = Instance.new("TextLabel", frame)
+timer.Size = UDim2.new(1,0,0,30)
+timer.Position = UDim2.new(0,0,0.55,0)
+timer.BackgroundTransparency = 1
+timer.Font = Enum.Font.Gotham
+timer.TextSize = 13
+timer.TextColor3 = Color3.fromRGB(180,180,180)
+
+local btn = Instance.new("TextButton", frame)
+btn.Size = UDim2.new(0.9,0,0,40)
+btn.Position = UDim2.new(0.05,0,0.75,0)
+btn.Text = "Activate"
+btn.BackgroundColor3 = Color3.fromRGB(90,140,255)
+btn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner",btn).CornerRadius = UDim.new(0,12)
+
+-- ================= ACTIVATE =================
+btn.MouseButton1Click:Connect(function()
+    if not keyLookup[box.Text] then
+        btn.Text = "Invalid key"
+        task.wait(1)
+        btn.Text = "Activate"
+        return
+    end
+
+    data = {
+        key = box.Text,
+        hwid = hwid,
+        startTime = os.time(),
+        lastSeen = os.time(),
+        used = true
+    }
+
+    writefile(SAVE_FILE, HttpService:JSONEncode(data))
+    TweenService:Create(blur,TweenInfo.new(0.2),{Size=0}):Play()
+    task.wait(0.2)
+    gui:Destroy()
+
+    loadstring(game:HttpGet(SCRIPT_URL))()
+end)
+
+-- ================= COUNTDOWN =================
+RunService.RenderStepped:Connect(function()
+    if not data.startTime then return end
+    local left = TRIAL_DURATION - (os.time() - data.startTime)
+    if left < 0 then left = 0 end
+
+    local h = math.floor(left/3600)
+    local m = math.floor((left%3600)/60)
+    local s = left%60
+
+    timer.Text = string.format("Trial: %02dh %02dm %02ds",h,m,s)
+end)
